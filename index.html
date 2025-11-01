@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bonus Tracker Pro — Capital Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"> 
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f4f6;--card:#ffffff;--muted:#6b7280;--accent:#2563eb;--red:#ef4444;--orange:#f97316;--green:#16a34a;}
+*{box-sizing:border-box} body{font-family:'Poppins',sans-serif;background:var(--bg);margin:0;padding:36px}
+.wrap{max-width:1200px;margin:0 auto} .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+h1{margin:0;font-size:22px;color:#111827} .sub{color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:1fr 400px;gap:18px}
+.card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 6px 20px rgba(17,24,39,0.06)}
+.controls{display:flex;gap:10px;align-items:end} label{display:block;font-size:13px;color:#374151;margin-bottom:6px}
+input[type=date],input[type=number],input[type=text],select{width:100%;padding:9px 10px;border-radius:8px;border:1px solid #e6e9ef;font-size:14px}
+.btn{background:var(--accent);color:#fff;padding:9px 14px;border-radius:8px;border:none;cursor:pointer}.btn.ghost{background:#f3f4f6;color:#111}
+table{width:100%;border-collapse:collapse;margin-top:12px} th,td{padding:10px;border-bottom:1px solid #f1f5f9;text-align:left} th{font-weight:600;color:#374151}
+.delete{background:transparent;border:1px solid #f3f4f6;color:#ef4444;padding:6px 8px;border-radius:6px;cursor:pointer}
+.stats-col{display:flex;flex-direction:column;gap:14px}
+.stat{display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;background:#fbfdff}
+.stat .icon{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#eef2ff}
+.stat .meta{flex:1}.stat .meta .label{font-size:13px;color:#374151} .stat .meta .value{font-size:20px;font-weight:700}
+.big-total{font-size:28px;font-weight:800;color:#111827}.small-muted{color:var(--muted);font-size:13px}
+.progress{height:14px;background:#eef2f7;border-radius:999px;overflow:hidden}.progress>div{height:100%;width:0%;transition:width .45s ease}
+@media(max-width:1060px){.grid{grid-template-columns:1fr 1fr}}
+@media(max-width:860px){.grid{grid-template-columns:1fr;}.header{flex-direction:column;align-items:flex-start;gap:8px}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="wrap">
+<div class="header">
+  <div>
+    <h1>Bonus Tracker Pro</h1>
+    <div class="sub">Dashboard — track earnings & Capital</div>
+  </div>
+  <div class="sub">Target: <strong id="targetLabel">5000</strong> DH</div>
+</div>
+
+<div class="grid">
+<div>
+<div class="card">
+<div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:8px;flex-wrap:wrap">
+  <div style="flex:1;min-width:140px"><label>Date</label><input type="date" id="dateInput"></div>
+  <div style="flex:1;min-width:120px"><label>Profit (DH)</label><input type="number" id="amountInput" min="0" step="1" placeholder="0"></div>
+  <div style="flex:1;min-width:120px"><label>Capital (DH)</label><input type="number" id="capitalInput" min="0" step="1" placeholder="0" value="0"></div>
+  <div style="flex:1;min-width:120px"><label>Capital Chemise (DH)</label><input type="number" id="capitalChemiseInput" min="0" step="1" placeholder="0" value="0"></div>
+  <div style="display:flex;gap:8px;align-items:center"><button class="btn" id="addBtn">+ Add</button><button class="btn ghost" id="clearBtn">Clear</button></div>
+  <div style="min-width:120px"><label>Target (DH)</label><input type="number" id="targetInput" value="5000" min="1"></div>
+</div>
+
+<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+  <div style="flex:1"><label>Filter by month</label><input type="month" id="filterMonth"></div>
+  <div style="display:flex;align-items:flex-end"><button class="btn" id="applyFilters">Apply</button></div>
+</div>
+
+<table id="entriesTable"><thead><tr><th>Date</th><th>Profit (DH)</th><th></th></tr></thead><tbody></tbody></table>
+</div>
+</div>
+
+<div class="stats-col">
+
+  <!-- Total Earned -->
+  <div class="card stat">
+    <div class="icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 1v22" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H15a3.5 3.5 0 0 1 0 7H6" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="meta">
+      <div class="label">Total Earned</div>
+      <div class="value big-total" id="totalLabel">0 DH</div>
+      <div class="small-muted" id="sumBreak"></div>
+    </div>
+  </div>
+
+  <!-- Capital Total -->
+  <div class="card stat">
+    <div class="icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" stroke="#16a34a" stroke-width="1.5"/>
+        <circle cx="12" cy="12" r="5" stroke="#16a34a" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <div class="meta">
+      <div class="label">Capital Total</div>
+      <div class="value big-total" id="capitalLabel">0 DH</div>
+      <button id="deleteCapitalBtn" class="btn ghost" style="margin-top:8px;padding:6px 10px;font-size:13px;">🗑️ Clear Capital</button>
+    </div>
+  </div>
+
+  <!-- Capital Chemise -->
+  <div class="card stat">
+    <div class="icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 2H9L12 6L15 2H20V22H4V2Z" stroke="#f97316" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M12 6V22" stroke="#f97316" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M4 12H20" stroke="#f97316" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="meta">
+      <div class="label">Capital Chemise Total</div>
+      <div class="value big-total" id="capitalChemiseLabel">0 DH</div>
+      <button id="deleteCapitalChemiseBtn" class="btn ghost" style="margin-top:8px;padding:6px 10px;font-size:13px;">🗑️ Clear Capital Chemise</button>
+    </div>
+  </div>
+
+  <!-- Remaining to Target -->
+  <div class="card stat">
+    <div class="icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" stroke="#f97316" stroke-width="1.5"/>
+        <circle cx="12" cy="12" r="5" stroke="#f97316" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <div class="meta">
+      <div class="label">Remaining to Target</div>
+      <div class="value" id="remainingLabel">5000 DH</div>
+      <div class="small-muted" id="percentLabel">Progress: 0%</div>
+    </div>
+  </div>
+
+  <div class="card"><div class="label">Progress</div><div style="margin-top:10px" class="progress"><div id="progressBar"></div></div></div>
+  <div class="card"><div class="label">Monthly Breakdown Chart</div><canvas id="monthlyChart" style="width:100%;height:250px;max-height:250px;"></canvas></div>
+
+</div>
+</div>
+</div>
+
+<script>
+const STORAGE_KEY='bonus_tracker_pro_charts';
+let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+  target:5000,
+  entries: [],
+  capitalEntries: [],
+  capitalChemise: []
+};
+
+const dateInput=document.getElementById('dateInput');
+const amountInput=document.getElementById('amountInput');
+const capitalInput=document.getElementById('capitalInput');
+const capitalChemiseInput=document.getElementById('capitalChemiseInput');
+const addBtn=document.getElementById('addBtn');
+const entriesTable=document.querySelector('#entriesTable tbody');
+const totalLabel=document.getElementById('totalLabel');
+const capitalLabel=document.getElementById('capitalLabel');
+const capitalChemiseLabel=document.getElementById('capitalChemiseLabel');
+const percentLabel=document.getElementById('percentLabel');
+const remainingLabel=document.getElementById('remainingLabel');
+const progressBar=document.getElementById('progressBar');
+const targetInput=document.getElementById('targetInput');
+const clearBtn=document.getElementById('clearBtn');
+const filterMonth=document.getElementById('filterMonth');
+const applyFilters=document.getElementById('applyFilters');
+const monthlyChartCtx=document.getElementById('monthlyChart').getContext('2d');
+const deleteCapitalBtn=document.getElementById('deleteCapitalBtn');
+const deleteCapitalChemiseBtn=document.getElementById('deleteCapitalChemiseBtn');
+let monthlyChart;
+
+function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
+function formatDate(d){const t=new Date(d);return isNaN(t)?d:t.toLocaleDateString()}
+function monthKey(d){const t=new Date(d);return isNaN(t)?'unknown':t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')}
+
+function render(){
+  const fMonth = filterMonth.value;
+  let filtered = state.entries;
+  if(fMonth) filtered = state.entries.filter(e => monthKey(e.date) === fMonth);
+
+  const totalFiltered = filtered.reduce((sum,e)=>sum+Number(e.amount||0),0);
+  totalLabel.textContent = totalFiltered+' DH';
+
+  const totalCapital = (state.capitalEntries||[]).reduce((sum,e)=>sum+Number(e.capital||0),0);
+  capitalLabel.textContent = totalCapital+' DH';
+
+  const totalCapitalChemise = (state.capitalChemise||[]).reduce((sum,e)=>sum+Number(e.capital||0),0);
+  capitalChemiseLabel.textContent = totalCapitalChemise+' DH';
+
+  const target = Number(state.target||5000);
+  const percent = Math.floor((totalFiltered/target)*100);
+  remainingLabel.textContent = Math.max(0,target-totalFiltered)+' DH';
+  percentLabel.textContent = 'Progress: '+Math.max(0,percent)+'%';
+  let color='var(--red)'; if(percent>40&&percent<100) color='var(--orange)'; if(percent>=100) color='var(--green)';
+  progressBar.style.width=Math.min(Math.max(percent,0),100)+'%';
+  progressBar.style.background=color;
+
+  entriesTable.innerHTML = filtered.map(e=>`<tr><td>${formatDate(e.date)}</td><td>${e.amount} DH</td><td><button class='delete' onclick='state.entries.splice(state.entries.indexOf(${JSON.stringify(e)}),1);save();render();'>Delete</button></td></tr>`).join('');
+
+  const months={}; filtered.forEach(e=>{const k=monthKey(e.date); months[k]=(months[k]||0)+Number(e.amount||0)});
+  const monthLabels=Object.keys(months).sort();
+  const monthValues=monthLabels.map(k=>months[k]);
+  if(monthlyChart) monthlyChart.destroy();
+  monthlyChart=new Chart(monthlyChartCtx,{
+    type:'bar', data:{labels:monthLabels,datasets:[{label:'Monthly Total',data:monthValues,backgroundColor:'#2563eb'}]},
+    options:{plugins:{legend:{display:false}},responsive:true,maintainAspectRatio:false}
+  });
+}
+
+addBtn.onclick = () => {
+  const date=dateInput.value||new Date().toISOString().slice(0,10);
+  const amount=Number(amountInput.value||0);
+  const capital=Number(capitalInput.value||0);
+  const capitalChemise=Number(capitalChemiseInput.value||0);
+
+  if(amount<=0 && capital<=0 && capitalChemise<=0) return alert('Enter a value (>0)');
+
+  if(amount>0) state.entries.push({date,amount});
+  if(capital>0) state.capitalEntries.push({date,capital});
+  if(capitalChemise>0) state.capitalChemise.push({date,capital:capitalChemise});
+
+  save();
+  render();
+
+  amountInput.value = '';
+  capitalInput.value = 0;
+  capitalChemiseInput.value = 0;
+}
+
+targetInput.onchange=()=>{const v=Number(targetInput.value||5000); if(v<=0)return; state.target=v; save(); render();}
+clearBtn.onclick=()=>{if(!confirm('Are you sure you want to clear all entries?'))return; state.entries=[]; state.capitalEntries=[]; state.capitalChemise=[]; save(); render();}
+applyFilters.onclick=()=>{render();}
+
+deleteCapitalBtn.onclick=()=>{if(!confirm('Bghiti tmsa7 Capital b2 kaml?'))return; state.capitalEntries=[]; save(); render();}
+deleteCapitalChemiseBtn.onclick = () => {if(!confirm('Bghiti tmsa7 Capital Chemise kaml?')) return; state.capitalChemise = []; save(); render();}
+
+// ✅ Automatically select current month and apply filter
+const now = new Date();
+const currentMonth = now.toISOString().slice(0, 7);
+filterMonth.value = currentMonth;
+
+render();
+</script>
+</body>
+</html>
